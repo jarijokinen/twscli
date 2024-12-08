@@ -15,9 +15,11 @@ int main(void)
 
   printf("Connecting to TWS API...\n");
   int sockfd = twsapi_connect(TWSAPI_IPADDR, TWSAPI_PORT);
-  if (sockfd) {
-    printf("Connected to TWS API successfully\n");
+  if (sockfd < 0) {
+    perror("twsapi_connect() error");
+    exit(EXIT_FAILURE);
   }
+  printf("Connected to TWS API successfully\n");
 
   int server_ver = twsapi_handshake(
     sockfd,
@@ -26,7 +28,7 @@ int main(void)
   );
 
   if (server_ver < 0) {
-    printf("twsapi_handshake() error");
+    perror("twsapi_handshake() error");
   }
   else {
     printf("Server API version: %d\n", server_ver);
