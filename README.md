@@ -7,8 +7,7 @@ Simple TWS API client written in C.
 ```bash
 git clone https://github.com/jarijokinen/twscli
 cd twscli
-make
-./twscli
+make clean; make; ./twscli
 ```
 
 ## License
