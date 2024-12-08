@@ -3,7 +3,9 @@ TARGET=twscli
 CC=gcc
 RM=rm
 CFLAGS=-std=c17 -Wall -Wextra -Wpedantic -pthread
-OBJS=main.o
+OBJS=\
+	main.o \
+	twsapi.o
 
 %.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
