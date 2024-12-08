@@ -4,10 +4,12 @@ CC=gcc
 RM=rm
 CFLAGS=-std=c17 -Wall -Wextra -Wpedantic -pthread
 OBJS=\
-	main.o \
-	twsapi.o
+	build/main.o \
+	build/twsapi/connection.o \
+	build/twsapi/message.o
 
-%.o: src/%.c
+build/%.o: src/%.c
+	mkdir -p build/twsapi
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJS)

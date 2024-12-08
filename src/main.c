@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
-#include "twsapi.h"
+
+#include "twsapi/connection.h"
 
 #define TWSAPI_IPADDR "127.0.0.1"
 #define TWSAPI_PORT 7496

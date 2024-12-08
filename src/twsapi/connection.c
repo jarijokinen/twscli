@@ -4,7 +4,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include "twsapi.h"
+
+#include "connection.h"
+#include "message.h"
 
 void twsapi_start(int sockfd)
 {
@@ -63,13 +65,7 @@ void *twsapi_recv(void *arg)
       continue;
     }
 
-    int msg_type = atoi(fields[0]);
-
-    switch (msg_type) {
-      case 4:
-        printf("Error: %s\n", fields[4]);
-        break;
-    }
+    twsapi_message_in(fields, num_fields);
   }
 
   return NULL;
@@ -79,7 +75,7 @@ int twsapi_handshake(int sockfd, int min_client_ver, int max_client_ver)
 {
   char buffer[1024] = {0};
 
-  if (send(sockfd, "API", 4, 0) < 0) {
+  if (send(sockfd, "API\0", 4, 0) < 0) {
     perror("send() error");
     return -1;
   }
@@ -108,11 +104,12 @@ int twsapi_handshake(int sockfd, int min_client_ver, int max_client_ver)
     perror("malloc() error");
     return -1;
   }
+
   memcpy(msg, buffer + sizeof(uint32_t), msg_len);
   msg[msg_len] = '\0';
+
   int server_ver = atoi(msg);
   free(msg);
-
   if (server_ver < min_client_ver || server_ver > max_client_ver) {
     perror("Server API version not supported");
     return -1;
@@ -128,7 +125,7 @@ void twsapi_pack(char *str, uint8_t **packed_msg, size_t *packed_msg_len)
   for (size_t i = 0; str[i] != '\0'; i++) {
     if (str[i] == '|') {
       str[i] = '\0';
-    }   
+    }
   }
 
   *packed_msg_len = sizeof(uint32_t) + str_len;

@@ -1,5 +1,5 @@
-#ifndef TWSCLI_TWSAPI_H
-#define TWSCLI_TWSAPI_H
+#ifndef TWSAPI_CONNECTION_H
+#define TWSAPI_CONNECTION_H
 
 int twsapi_connect(const char *ipaddr, int port);
 int twsapi_disconnect(int sockfd);
