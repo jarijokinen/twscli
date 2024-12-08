@@ -8,17 +8,48 @@
 
 int twsapi_handshake(int sockfd, int min_client_ver, int max_client_ver)
 {
+  char buffer[1024] = {0};
+
   if (send(sockfd, "API", 4, 0) < 0) {
     perror("send() error");
     return -1;
   }
-
+  
   char client_ver[10];
   snprintf(client_ver, sizeof(client_ver), "v%d..%d", min_client_ver, 
     max_client_ver);
   twsapi_send(sockfd, client_ver);
 
-  return 0;
+  int bytes_recv = recv(sockfd, buffer, sizeof(buffer), 0);
+  if (bytes_recv < 0) {
+    perror("recv() error");
+    return -1;
+  }
+  else if (bytes_recv == 0) {
+    perror("recv() error: connection closed by server");
+    return -1;
+  }
+
+  uint32_t msg_len = 0;
+  memcpy(&msg_len, buffer, sizeof(uint32_t));
+  msg_len = ntohl(msg_len);
+
+  char *msg = malloc(msg_len + 1);
+  if (msg == NULL) {
+    perror("malloc() error");
+    return -1;
+  }
+  memcpy(msg, buffer + sizeof(uint32_t), msg_len);
+  msg[msg_len] = '\0';
+  int server_ver = atoi(msg);
+  free(msg);
+
+  if (server_ver < min_client_ver || server_ver > max_client_ver) {
+    perror("Server API version not supported");
+    return -1;
+  }
+
+  return server_ver;
 }
 
 void twsapi_pack(const char *str, uint8_t **packed_msg, size_t *packed_msg_len)
@@ -63,12 +94,6 @@ int twsapi_connect(const char *ipaddr, int port)
     return -1;
   }
 
-  if (twsapi_handshake(sockfd, 100, 157) < 0) {
-    perror("twsapi_handshake() error");
-    close(sockfd);
-    return -1;
-  }
-
   return sockfd;
 }
 
@@ -84,11 +109,13 @@ int twsapi_send(int sockfd, const char *msg)
   uint8_t *packed_msg = NULL;
 
   twsapi_pack(msg, &packed_msg, &packed_msg_len);
-
-  if (send(sockfd, &packed_msg, packed_msg_len, 0) < 0) {
+  
+  if (send(sockfd, packed_msg, packed_msg_len, 0) < 0) {
     perror("send() error");
+    free(packed_msg);
     return -1;
   }
 
+  free(packed_msg);
   return 0;
 }
