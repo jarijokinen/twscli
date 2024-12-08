@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 #include "twsapi.h"
 
 #define TWSAPI_IPADDR "127.0.0.1"
@@ -9,6 +11,8 @@
 
 int main(void)
 {
+  pthread_t tid;
+
   printf("Connecting to TWS API...\n");
   int sockfd = twsapi_connect(TWSAPI_IPADDR, TWSAPI_PORT);
   if (sockfd) {
@@ -28,6 +32,18 @@ int main(void)
     printf("Server API version: %d\n", server_ver);
   }
 
+  if (pthread_create(&tid, NULL, twsapi_recv, (void *)&sockfd) != 0) {
+    perror("pthread_create() error");
+  }
+
+  twsapi_start(sockfd);
+
+  while (1) {
+    sleep(1);
+  }
+
+  pthread_cancel(tid);
+  pthread_join(tid, NULL);
   twsapi_disconnect(sockfd);
   printf("Disconnected from TWS API\n");
 

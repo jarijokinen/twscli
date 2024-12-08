@@ -6,6 +6,75 @@
 #include <unistd.h>
 #include "twsapi.h"
 
+void twsapi_start(int sockfd)
+{
+  char msg[] = "71|2|1||";
+  twsapi_send(sockfd, msg);
+  sleep(1);
+}
+
+void *twsapi_recv(void *arg)
+{
+  int sockfd = *(int *)arg;
+  char buffer[1024] = {0};
+
+  while (1) {
+    uint32_t msg_len;
+    int bytes_recv = recv(sockfd, &msg_len, sizeof(msg_len), 0);
+    if (bytes_recv < 0) {
+      perror("recv() error");
+      break;
+    }
+    else if (bytes_recv == 0) {
+      perror("recv() error: connection closed by server");
+      break;
+    }
+
+    msg_len = ntohl(msg_len);
+    if (msg_len > sizeof(buffer) - 1) {
+      perror("Message too long");
+      break;
+    }
+
+    bytes_recv = recv(sockfd, buffer, msg_len, 0);
+    if (bytes_recv < 0) {
+      perror("recv() error");
+      break;
+    }
+    else if (bytes_recv == 0) {
+      perror("recv() error: connection closed by server");
+      break;
+    }
+    buffer[msg_len] = '\0';
+
+    char *fields[64] = {0};
+    int num_fields = 0;
+    char *field = buffer;
+
+    while (field < buffer + msg_len && num_fields < 64) {
+      fields[num_fields++] = field;
+      field += strlen(field) + 1;
+      if (field >= buffer + msg_len) {
+        break;
+      }
+    }
+
+    if (num_fields == 0) {
+      continue;
+    }
+
+    int msg_type = atoi(fields[0]);
+
+    switch (msg_type) {
+      case 4:
+        printf("Error: %s\n", fields[4]);
+        break;
+    }
+  }
+
+  return NULL;
+}
+
 int twsapi_handshake(int sockfd, int min_client_ver, int max_client_ver)
 {
   char buffer[1024] = {0};
@@ -52,9 +121,15 @@ int twsapi_handshake(int sockfd, int min_client_ver, int max_client_ver)
   return server_ver;
 }
 
-void twsapi_pack(const char *str, uint8_t **packed_msg, size_t *packed_msg_len)
+void twsapi_pack(char *str, uint8_t **packed_msg, size_t *packed_msg_len)
 {
   size_t str_len = strlen(str);
+
+  for (size_t i = 0; str[i] != '\0'; i++) {
+    if (str[i] == '|') {
+      str[i] = '\0';
+    }   
+  }
 
   *packed_msg_len = sizeof(uint32_t) + str_len;
   *packed_msg = malloc(*packed_msg_len);
@@ -103,7 +178,7 @@ int twsapi_disconnect(int sockfd)
   return 0;
 }
 
-int twsapi_send(int sockfd, const char *msg)
+int twsapi_send(int sockfd, char *msg)
 {
   size_t packed_msg_len = 0;
   uint8_t *packed_msg = NULL;
