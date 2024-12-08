@@ -7,7 +7,7 @@
 #define TWSAPI_IPADDR "127.0.0.1"
 #define TWSAPI_PORT 7496
 #define TWSAPI_MIN_CLIENT_VER 100
-#define TWSAPI_MAX_CLIENT_VER 157
+#define TWSAPI_MAX_CLIENT_VER 187
 
 int main(void)
 {
@@ -29,6 +29,8 @@ int main(void)
 
   if (server_ver < 0) {
     perror("twsapi_handshake() error");
+    twsapi_disconnect(sockfd);
+    exit(EXIT_FAILURE);
   }
   else {
     printf("Server API version: %d\n", server_ver);
@@ -36,6 +38,8 @@ int main(void)
 
   if (pthread_create(&tid, NULL, twsapi_recv, (void *)&sockfd) != 0) {
     perror("pthread_create() error");
+    twsapi_disconnect(sockfd);
+    exit(EXIT_FAILURE);
   }
 
   twsapi_start(sockfd);
