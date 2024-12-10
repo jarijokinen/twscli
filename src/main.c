@@ -44,6 +44,30 @@ int main(void)
   }
 
   twsapi_start(sockfd);
+  
+  char msg[] = "20|"
+    "1|"
+    "0|"
+    "AAPL|"
+    "STK|"
+    "|"
+    "0.0|"
+    "|"
+    "|"
+    "SMART|"
+    "|"
+    "USD|"
+    "|"
+    "|"
+    "0|"
+    "|"
+    "5 secs|"
+    "1 D|"
+    "1|"
+    "TRADES|"
+    "1|"
+    "1||";
+  twsapi_send(sockfd, msg);
 
   while (1) {
     sleep(1);

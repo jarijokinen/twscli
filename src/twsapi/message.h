@@ -1,7 +1,7 @@
 #ifndef TWSAPI_MESSAGE_H
 #define TWSAPI_MESSAGE_H
 
-void twsapi_message_in(char **fields, int num_fields);
+void twsapi_message_in(char **fields, size_t num_fields);
 
 enum IncomingMessage {
   TICK_PRICE = 1,
